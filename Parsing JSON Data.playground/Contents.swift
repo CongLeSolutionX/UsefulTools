@@ -277,5 +277,124 @@ let decoder = JSONDecoder()
 decoder.dateDecodingStrategy = .iso8601
 let company = try decoder.decode(History.self, from: jsonTransactionData)
 print("\n")
-print("Parsing transation payload:")
+print("Parsing transaction payload:")
 print(company.transactions[0])
+
+// MARK: - Access Nested Data
+
+// An existing GroceryStore model and products it sells
+struct GroceryStore {
+    let name: String
+    var products: [Product]
+    
+    struct Product: Codable {
+        let name: String
+        let points: Int
+        let description: String?
+    }
+}
+
+// An API supplies information about grocery store with the follong JSON structure
+let jsonGroceryStore = """
+[
+  {
+    "name": "Home Town Market",
+    "aisles": [
+      {
+        "name": "Produce",
+        "shelves": [
+          {
+            "name": "Discount Produce",
+            "product": {
+              "name": "Banana",
+              "points": 200,
+              "description": "A banana that's perfectly ripe."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Big City Market",
+    "aisles": [
+      {
+        "name": "Sale Aisle",
+        "shelves": [
+          {
+            "name": "Seasonal Sale",
+            "product": {
+              "name": "Chestnuts",
+              "points": 700,
+              "description": "Chestnuts that were roasted over an open fire."
+            }
+          },
+          {
+            "name": "Last Season's Clearance",
+            "product": {
+              "name": "Pumpkin Seeds",
+              "points": 400,
+              "description": "Seeds harvested from a pumpkin."
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
+"""
+/// We can see the inconsitentcies between the existing Swift model and the provided external JSON data.
+/// The JSON payload has a structural incompatibility with the GroceryStore struct: its products are nested inside aisles and shelves.
+/// Since we only interested in partial information from the JSON payload,
+/// we will create a intermediary strucrture called `GroceryStoreService` to bridge the `GroceryStore` struct and the JSON payload
+/// `GroceryStoreService` will mirrors the shape of  the source JSON and conform to `Decodable` protocol as following:
+
+struct GroceryStoreService: Decodable {
+    let name: String
+    let aisles: [Aisles]
+    
+    struct Aisles: Decodable {
+        let name: String
+        let shelves: [Shelf]
+        
+        struct Shelf: Decodable {
+            let name: String
+            let product: GroceryStore.Product
+        }
+    }
+}
+/// The `GroceryStore` structures's nested `Product` structure  is reused in the `Shelf` structure of the JSON payload
+/// since they uses the same names and types.
+
+/// This extension with an initilizer wil remove all the unused elements in the payload and only keep element products
+extension GroceryStore {
+    init(from service: GroceryStoreService) {
+        name = service.name
+        products = []
+        
+        for aisle in service.aisles {
+            for shelf in aisle.shelves {
+                products.append(shelf.product)
+            }
+        }
+    }
+}
+
+/// Now, we can reading the JSON payload through our intermediate type`GroceryStoreService`,
+/// and map the result into our existing model `GroceryStore`
+let jsonGroceryStoreData = jsonGroceryStore.data(using: .utf8)!
+let serviceStores =  try JSONDecoder().decode([GroceryStoreService].self, from: jsonGroceryStoreData)
+let stores = serviceStores.map { GroceryStore(from: $0)}
+
+print("\n")
+print("Parsing nested data payload:")
+for store in stores {
+    print("\(store.name) is selling:")
+    for product in store.products {
+        print("\t\(product.name) (\(product.points) points")
+        if let desciption = product.description {
+            print("\t\t\(desciption)")
+        }
+    
+    }
+}
