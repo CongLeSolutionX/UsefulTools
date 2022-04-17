@@ -9,8 +9,10 @@ There are 2 ways to parse JSON natively  in iOS:
     - This method is availabel from Swift 4 and later.
     - This method is mostly used in mordern iOS application
     - In this method, we create a model and reading external JSON data into your model.
+ 
  Ideas for project:
  https://github.com/johncodeos-blog/ParseJSONiOSExample.git
+ https://johncodeos.com/how-to-parse-json-with-swiftyjson-in-ios-using-swift
 */
 
 
