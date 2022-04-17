@@ -1,5 +1,19 @@
 import UIKit
 
+/*
+There are 2 ways to parse JSON natively  in iOS:
+ 1. JSONSerialization:
+    - This is the old fashion way to perfrom this task.
+    - We should only use this method when parsing 1 or 2 JSON objects
+ 2. JSONDecoder:
+    - This method is availabel from Swift 4 and later.
+    - This method is mostly used in mordern iOS application
+    - In this method, we create a model and reading external JSON data into your model.
+ Ideas for project:
+ https://github.com/johncodeos-blog/ParseJSONiOSExample.git
+*/
+
+
 let json = """
 [
   {
